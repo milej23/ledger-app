@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ledger</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ledger" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="theme-color" content="#0d0d0f" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #141416;
+      --surface2: #1c1c1f;
+      --border: rgba(255,255,255,0.07);
+      --text: #f0f0f0;
+      --text-muted: #6b6b75;
+      --text-dim: #3a3a42;
+      --accent: #22c55e;
+      --accent-dim: rgba(34,197,94,0.12);
+      --font: 'DM Sans', system-ui, sans-serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 14px;
+      padding-top: max(16px, env(safe-area-inset-top, 16px));
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .header-logo {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.6px;
+      color: #ffffff;
+    }
+
+    .header-logo span { color: var(--accent); }
+
+    .header-actions { display: flex; gap: 8px; }
+
+    .icon-btn {
+      height: 38px;
+      min-width: 38px;
+      border-radius: 12px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: color 0.15s cubic-bezier(0.32,0.72,0,1), transform 0.12s cubic-bezier(0.32,0.72,0,1);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 0 10px;
+      gap: 5px;
+    }
+
+    .icon-btn:hover { color: rgba(255,255,255,0.92); }
+    .icon-btn:active { transform: scale(0.9); color: var(--text); }
+    .icon-btn svg { width: 17px; height: 17px; }
+
+    /* ── Spent hero ── */
+    .spent-hero {
+      padding: 4px 20px 18px;
+      flex-shrink: 0;
+    }
+
+    .spent-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .spent-amount {
+      font-family: var(--mono);
+      font-size: 46px;
+      font-weight: 500;
+      letter-spacing: -2px;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .spent-period {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 400;
+      letter-spacing: -0.2px;
+    }
+
+    /* ── Period slider ── */
+    .period-slider {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px 16px;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .period-arrow {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: rgba(255,255,255,0.45);
+      border-radius: 12px;
+      transition: color 0.15s cubic-bezier(0.32,0.72,0,1), transform 0.12s cubic-bezier(0.32,0.72,0,1);
+      background: transparent;
+      border: none;
+      flex-shrink: 0;
+    }
+
+    .period-arrow:hover { color: rgba(255,255,255,0.9); }
+    .period-arrow:active { color: var(--text); transform: scale(0.88); }
+    .period-arrow svg { width: 18px; height: 18px; }
+
+    .period-label {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      flex: 1;
+      letter-spacing: -0.4px;
+    }
+
+    /* ── Log ── */
+    .log {
+      flex: 1;
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+    }
+
+    .log::-webkit-scrollbar { display: none; }
+
+    .date-group-header {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      padding: 9px 16px 5px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      z-index: 2;
+    }
+
+    .log-row {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      animation: slide-in 0.22s ease both;
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-5px); }
+      40%      { transform: translateX(5px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(3px); }
+    }
+
+    .log-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+      background: var(--surface2);
+    }
+
+    .log-icon.income { background: var(--accent-dim); }
+
+    .log-body { flex: 1; min-width: 0; }
+
+    .log-desc {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.1px;
+    }
+
+    .log-meta {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 3px;
+    }
+
+    .log-cat {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0;
+      color: rgba(255,255,255,0.42);
+    }
+
+    .log-time {
+      font-size: 12px;
+      color: rgba(255,255,255,0.32);
+      font-family: var(--mono);
+    }
+
+    .log-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .log-amount {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .log-amount.income { color: var(--accent); }
+
+    .log-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      display: flex;
+      padding: 3px;
+      transition: color 0.15s;
+      border-radius: 4px;
+    }
+
+    .log-del:hover { color: var(--text-muted); }
+    .log-del:active { color: #f43f5e; }
+    .log-del svg { width: 13px; height: 13px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 50px 20px;
+    }
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+
+    .empty-title { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+    .empty-sub   { font-size: 12px; color: var(--text-dim); text-align: center; max-width: 180px; line-height: 1.5; }
+
+
+    /* ── Input area ── */
+    .input-area {
+      padding: 6px 12px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+      background: var(--bg);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Input warning ── */
+    .input-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 0 4px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.28s cubic-bezier(0.32,0.72,0,1),
+                  opacity 0.2s ease,
+                  padding 0.28s cubic-bezier(0.32,0.72,0,1);
+      pointer-events: none;
+    }
+
+    .input-warning.show {
+      max-height: 80px;
+      opacity: 1;
+      padding: 8px 4px 2px;
+      pointer-events: auto;
+    }
+
+    .input-warning-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(244,63,94,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .input-warning-icon svg {
+      width: 11px;
+      height: 11px;
+      stroke: rgba(244,63,94,0.9);
+    }
+
+    .input-warning-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(244,63,94,0.85);
+      line-height: 1.4;
+      letter-spacing: -0.1px;
+    }
+
+    .input-warning-sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: rgba(244,63,94,0.55);
+      margin-top: 1px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 22px;
+      padding: 10px 10px 10px 18px;
+      transition: border-color 0.18s;
+    }
+
+    .input-row:focus-within { border-color: rgba(255,255,255,0.2); }
+
+    #msg-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: var(--font);
+      font-size: 16px;
+      color: var(--text);
+      resize: none;
+      max-height: 100px;
+      min-height: 26px;
+      line-height: 1.45;
+    }
+
+    #msg-input::placeholder { color: var(--text-dim); }
+
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+      flex-shrink: 0;
+    }
+
+    .send-btn:not(:disabled) { background: var(--text); border-color: var(--text); }
+    .send-btn:not(:disabled):hover { background: #e0e0e0; }
+    .send-btn:not(:disabled):active { transform: scale(0.87); }
+    .send-btn svg { width: 15px; height: 15px; fill: var(--bg); }
+    .send-btn:disabled svg { fill: var(--text-dim); }
+
+    /* ── Bottom sheet ── */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s;
+    }
+
+    .sheet-overlay.open { opacity: 1; pointer-events: all; }
+
+    .sheet {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 22px 22px 0 0;
+      z-index: 50;
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      max-height: 85dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sheet.open { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle {
+      width: 34px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 10px auto 0;
+      flex-shrink: 0;
+    }
+
+    .sheet-header {
+      padding: 16px 20px 12px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sheet-sub { font-size: 13px; color: var(--text-muted); font-weight: 400; letter-spacing: 0; }
+
+    .sheet-body { overflow-y: auto; padding: 0 16px 20px; flex: 1; }
+    .sheet-body::-webkit-scrollbar { display: none; }
+
+    .cat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cat-row:last-child { border-bottom: none; }
+    .cat-left { display: flex; align-items: center; gap: 11px; }
+
+    .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cat-name { font-size: 15px; font-weight: 500; letter-spacing: -0.1px; }
+    .cat-count { font-size: 12px; color: var(--text-muted); }
+
+    .cat-amount { font-family: var(--mono); font-size: 15px; font-weight: 500; }
+
+    .cat-bar-track { width: 50px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .cat-bar-fill  { height: 100%; border-radius: 2px; }
+
+    .clear-btn {
+      margin: 8px 16px 0;
+      padding: 14px;
+      background: none;
+      border: 1px solid rgba(244,63,94,0.25);
+      border-radius: 14px;
+      color: #f43f5e;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: calc(100% - 32px);
+      transition: background 0.15s, transform 0.12s;
+      letter-spacing: -0.1px;
+    }
+
+    .clear-btn:hover { background: rgba(244,63,94,0.06); }
+    .clear-btn:active { background: rgba(244,63,94,0.1); transform: scale(0.99); }
+
+    /* ── Currency grid ── */
+    .currency-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      padding: 0 16px 20px;
+      overflow-y: auto;
+    }
+
+    .currency-grid::-webkit-scrollbar { display: none; }
+
+    .currency-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 12px;
+      border-radius: 13px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all 0.14s;
+    }
+
+    .currency-item:active { transform: scale(0.97); }
+
+    .currency-item.active {
+      border-color: rgba(34,197,94,0.4);
+      background: var(--accent-dim);
+    }
+
+    .currency-flag { font-size: 20px; flex-shrink: 0; }
+    .currency-info { min-width: 0; flex: 1; }
+    .currency-code { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+    .currency-name { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .currency-sym  { font-family: var(--mono); font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+    .currency-item.active .currency-sym { color: var(--accent); }
+
+    /* ── Collapsible day groups ── */
+    .day-group { border-bottom: 1px solid var(--border); }
+
+    .day-group-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 16px;
+      cursor: pointer;
+      background: var(--surface);
+      user-select: none;
+      transition: background 0.13s;
+      gap: 12px;
+    }
+
+    .day-group-toggle:hover { background: rgba(255,255,255,0.02); }
+    .day-group-toggle:active { background: var(--surface2); }
+
+    .day-toggle-left { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+
+    .day-toggle-date {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .day-toggle-count {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .day-toggle-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .day-toggle-total {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .day-toggle-see-more {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.38);
+      letter-spacing: 0.02em;
+    }
+
+    .day-toggle-see-more svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .day-group.open .day-toggle-see-more svg { transform: rotate(180deg); }
+    .day-group.open .day-toggle-see-more { color: var(--text-muted); }
+
+    .day-group-rows { display: none; }
+    .day-group.open .day-group-rows { display: block; }
+
+    /* ── Analytics sheet ── */
+    .analytics-section {
+      padding: 0 16px 20px;
+    }
+
+    .analytics-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .pie-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .pie-svg-wrap {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      flex-shrink: 0;
+    }
+
+    .pie-center-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .pie-center-total {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .pie-center-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .pie-legend {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pie-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .pie-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .pie-legend-name {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .pie-legend-pct {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      width: 34px;
+      text-align: right;
+    }
+
+    .pie-legend-amt {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .analytics-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 16px;
+    }
+
+    .bar-chart-wrap {
+      width: 100%;
+    }
+
+    .bar-chart-svg {
+      width: 100%;
+      overflow: visible;
+    }
+
+    .bar-month-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      fill: var(--text-dim);
+      text-anchor: middle;
+    }
+
+    .bar-amount-label {
+      font-family: var(--mono);
+      font-size: 8px;
+      fill: var(--text-muted);
+      text-anchor: middle;
+    }
+
+    .no-data-msg {
+      text-align: center;
+      padding: 30px 0;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* ── Full-screen panels ── */
+    .fullscreen {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg);
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100vw);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    }
+
+    .fullscreen.open { transform: translateX(0); }
+
+    .fullscreen-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 8px 12px;
+      padding-top: max(12px, env(safe-area-inset-top, 12px));
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 500;
+      padding: 6px 8px;
+      border-radius: 10px;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .back-btn:active { opacity: 0.6; }
+    .back-btn svg { width: 18px; height: 18px; }
+
+    .fullscreen-title {
+      flex: 1;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.4px;
+      text-align: center;
+      padding-right: 60px; /* balance the back button */
+    }
+
+    .fullscreen-body {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    }
+    .fullscreen-body::-webkit-scrollbar { display: none; }
+
+    /* ── Settings rows ── */
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px 4px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row:active { opacity: 0.6; }
+
+    .settings-icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .settings-row-body { flex: 1; min-width: 0; }
+    .settings-row-label { font-size: 15px; font-weight: 500; color: var(--text); letter-spacing: -0.1px; }
+    .settings-row-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .settings-chevron {
+      width: 16px;
+      height: 16px;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    /* ── Reminder options ── */
+    .option-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .option-section-hint {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+    .option-card {
+      border-radius: 14px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .option-row:last-child { border-bottom: none; }
+    .option-row:active { opacity: 0.6; }
+    .option-row-body { flex: 1; min-width: 0; }
+    .option-row-title { display: flex; align-items: center; gap: 8px; }
+    .option-row-label { font-size: 15px; font-weight: 500; color: var(--text); letter-spacing: -0.1px; }
+    .option-row-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .option-badge {
+      background: var(--accent-dim);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .option-radio {
+      width: 22px;
+      height: 22px;
+      border-radius: 11px;
+      border: 2px solid var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .option-radio.active { border-color: var(--accent); }
+    .option-radio-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 6px;
+      background: var(--accent);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      top: max(56px, env(safe-area-inset-top, 56px));
+      left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 15px;
+      font-size: 13px;
+      color: var(--text-muted);
+      z-index: 100;
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">Ledger<span>.</span></div>
+    <div class="header-actions">
+      <button class="icon-btn" id="currency-btn" onclick="openCurrencySheet()">USD</button>
+      <button class="icon-btn" onclick="openAnalyticsSheet()" title="Analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l6.5 3.5"/><path d="M22 2L12 12"/>
+        </svg>
+      </button>
+      <button class="icon-btn" onclick="openSettingsSheet()" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Spent hero -->
+  <div class="spent-hero">
+    <div class="spent-label">Spent</div>
+    <div class="spent-amount" id="spent-amount">$0.00</div>
+    <div class="spent-period" id="spent-period"></div>
+  </div>
+
+  <!-- Period slider -->
+  <div class="period-slider">
+    <button class="period-arrow" onclick="stepPeriod(-1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="period-label" id="period-label">Today</span>
+    <button class="period-arrow" onclick="stepPeriod(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+
+  <!-- Transaction Log -->
+  <div class="log" id="log"></div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-warning" id="input-warning">
+      <div class="input-warning-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div>
+        <div class="input-warning-text" id="input-warning-text"></div>
+        <div class="input-warning-sub" id="input-warning-sub"></div>
+      </div>
+    </div>
+    <div class="input-row">
+      <textarea id="msg-input" rows="1" placeholder="spent 20 on food…" maxlength="300"></textarea>
+      <button class="send-btn" id="send-btn" onclick="handleSend()" disabled>
+        <svg viewBox="0 0 24 24"><path d="M2 12L22 2L12 22L10 13L2 12Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Shared overlay -->
+<div class="sheet-overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<!-- Currency Sheet -->
+<div class="sheet" id="currency-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span>Currency</span>
+    <span class="sheet-sub">tap to switch</span>
+  </div>
+  <div class="currency-grid" id="currency-grid"></div>
+</div>
+
+<!-- Analytics full-screen -->
+<div class="fullscreen" id="analytics-screen">
+  <div class="fullscreen-nav">
+    <button class="back-btn" onclick="closeFullscreen('analytics-screen')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="fullscreen-title">Analytics <span id="analytics-period-label" style="font-size:13px;font-weight:400;color:var(--text-muted);"></span></div>
+  </div>
+  <div class="fullscreen-body">
+    <div class="analytics-section">
+      <div class="analytics-title">Breakdown</div>
+      <div id="sheet-body"></div>
+    </div>
+    <div class="analytics-divider"></div>
+    <div class="analytics-section" id="analytics-pie-section">
+      <div class="analytics-title">Spending by Category</div>
+      <div class="pie-wrap">
+        <div class="pie-svg-wrap">
+          <svg id="pie-svg" viewBox="0 0 180 180" style="width:180px;height:180px;"></svg>
+          <div class="pie-center-label">
+            <div class="pie-center-total" id="pie-center-total"></div>
+            <div class="pie-center-sub">total spent</div>
+          </div>
+        </div>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+    </div>
+    <div class="analytics-divider"></div>
+    <div class="analytics-section" id="analytics-bar-section">
+      <div class="analytics-title">Monthly Expenses</div>
+      <div class="bar-chart-wrap" id="bar-chart-wrap"></div>
+    </div>
+    <button class="clear-btn" onclick="confirmClear()">Clear all transactions</button>
+  </div>
+</div>
+
+<!-- Settings full-screen -->
+<div class="fullscreen" id="settings-screen">
+  <div class="fullscreen-nav">
+    <button class="back-btn" onclick="closeFullscreen('settings-screen')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="fullscreen-title">Settings</div>
+  </div>
+  <div class="fullscreen-body" style="padding-top:8px;">
+    <div class="settings-row" onclick="showToast('Coming soon')">
+      <div class="settings-icon-wrap">👤</div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Profile</div>
+        <div class="settings-row-sub">Name, avatar, preferences</div>
+      </div>
+      <svg class="settings-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="settings-row" onclick="openNotificationsSheet()">
+      <div class="settings-icon-wrap">🔔</div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Notifications</div>
+        <div class="settings-row-sub" id="notifications-row-sub">Off</div>
+      </div>
+      <svg class="settings-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="settings-row" onclick="showToast('Coming soon')">
+      <div class="settings-icon-wrap">💬</div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Feedback</div>
+        <div class="settings-row-sub">Report a bug or suggest a feature</div>
+      </div>
+      <svg class="settings-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="settings-row" onclick="showToast('Coming soon')">
+      <div class="settings-icon-wrap">🔒</div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Passcode</div>
+        <div class="settings-row-sub">Lock the app with a PIN</div>
+      </div>
+      <svg class="settings-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="settings-row" onclick="showToast('Coming soon')">
+      <div class="settings-icon-wrap">💾</div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Backup</div>
+        <div class="settings-row-sub">Export or restore your data</div>
+      </div>
+      <svg class="settings-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- Notifications full-screen -->
+<div class="fullscreen" id="notifications-screen">
+  <div class="fullscreen-nav">
+    <button class="back-btn" onclick="closeFullscreen('notifications-screen')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="fullscreen-title">Notifications</div>
+  </div>
+  <div class="fullscreen-body" style="padding: 8px 16px;">
+    <div class="option-section-label">REMINDER FREQUENCY</div>
+    <div class="option-section-hint">Get nudged to log your spending. We recommend once a day — more frequent reminders can feel like noise, but pick what works for you.</div>
+    <div class="option-card" id="reminder-options"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+function readJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+let transactions = readJSON('ledger_tx', []);
+let currency = readJSON('ledger_currency', null)
+             || { code:'USD', symbol:'$', name:'US Dollar', flag:'🇺🇸' };
+const PERIODS = ['today', 'this-week', 'this-month'];
+const PERIOD_NAMES = { today: 'Today', 'this-week': 'This week', 'this-month': 'This month' };
+let activePeriodIdx = 0;
+let activePeriod = PERIODS[0];
+
+const CURRENCIES = [
+  { code:'USD', symbol:'$',   name:'US Dollar',        flag:'🇺🇸' },
+  { code:'TWD', symbol:'NT$', name:'Taiwan Dollar',    flag:'🇹🇼' },
+  { code:'EUR', symbol:'€',   name:'Euro',              flag:'🇪🇺' },
+  { code:'GBP', symbol:'£',   name:'British Pound',     flag:'🇬🇧' },
+  { code:'JPY', symbol:'¥',   name:'Japanese Yen',      flag:'🇯🇵' },
+  { code:'CAD', symbol:'C$',  name:'Canadian Dollar',   flag:'🇨🇦' },
+  { code:'AUD', symbol:'A$',  name:'Australian Dollar', flag:'🇦🇺' },
+  { code:'CHF', symbol:'Fr',  name:'Swiss Franc',       flag:'🇨🇭' },
+  { code:'CNY', symbol:'¥',   name:'Chinese Yuan',      flag:'🇨🇳' },
+  { code:'INR', symbol:'₹',   name:'Indian Rupee',      flag:'🇮🇳' },
+  { code:'BRL', symbol:'R$',  name:'Brazilian Real',    flag:'🇧🇷' },
+  { code:'MXN', symbol:'MX$', name:'Mexican Peso',      flag:'🇲🇽' },
+  { code:'KRW', symbol:'₩',   name:'Korean Won',        flag:'🇰🇷' },
+  { code:'SGD', symbol:'S$',  name:'Singapore Dollar',  flag:'🇸🇬' },
+  { code:'AED', symbol:'د.إ', name:'UAE Dirham',        flag:'🇦🇪' },
+  { code:'TRY', symbol:'₺',   name:'Turkish Lira',      flag:'🇹🇷' },
+  { code:'SAR', symbol:'﷼',   name:'Saudi Riyal',       flag:'🇸🇦' },
+  { code:'HKD', symbol:'HK$', name:'Hong Kong Dollar',  flag:'🇭🇰' },
+  { code:'NOK', symbol:'kr',  name:'Norwegian Krone',   flag:'🇳🇴' },
+  { code:'SEK', symbol:'kr',  name:'Swedish Krona',     flag:'🇸🇪' },
+];
+
+const CATEGORIES = {
+  food:      { label:'Food',      icon:'🍽', color:'#f97316', keywords:['food','lunch','dinner','breakfast','restaurant','burger','pizza','sushi','meal','ate','eat','taco','sandwich','salad','coffee','cafe','starbucks','espresso','latte','cappuccino','tea','boba','drink','juice','beer','wine','kebab','crepe','waffle','pancake','ramen','pho','noodle','noodles','pasta','risotto','curry','biryani','shawarma','falafel','hummus','gyro','wrap','burrito','quesadilla','enchilada','nacho','dumpling','dim sum','baozi','gyoza','tempura','teriyaki','udon','soba','pad thai','fried rice','spring roll','bánh mì','banh mi','poke','acai','smoothie','bubble tea','matcha','donut','doughnut','bagel','croissant','muffin','toast','brioche','pretzel','nachos','hot dog','hot pot','hotpot','shabu','sukiyaki','bbq','barbecue','grill','steak','ribs','wings','fried chicken','chicken','beef','lamb','pork','fish','seafood','shrimp','lobster','crab','oyster','clam','salmon','tuna','maki','nigiri','sashimi','onigiri','takoyaki','yakitori','tonkatsu','katsu','schnitzel','paella','tapas','bruschetta','antipasto','charcuterie','fondue','raclette','pierogi','goulash','borscht','falafel','moussaka','souvlaki','tagine','injera','jollof','peri peri','bunny chow','laksa','satay','rendang','nasi lemak','char kway teow','hainanese','murtabak','rojak','cendol','tteokbokki','bibimbap','bulgogi','japchae','kimchi','sundubu','galbi','samgyeopsal','gimbap','mandu','bingsu','hotteok','chapati','naan','paratha','dosa','idli','samosa','chaat','pani puri','dal','tikka','masala','korma','vindaloo','haleem','nihari','poutine','peameal','beaver tail','gelato','sorbet','sundae','milkshake','frappe','affogato','tiramisu','cheesecake','brownie','cookie','macaron','eclair','profiterole','churro','baklava','mochi','daifuku','taiyaki','halo halo','taho','leche flan',
+      // Japanese expanded
+      'okonomiyaki','yakisoba','kaiseki','wagyu','karaage','tamagoyaki','chawanmushi','tsukemen','mazemen','tantanmen','katsu curry','miso soup','edamame','unagi','eel','ikura','uni','hamachi','yellowtail','anago','hotate','scallop','tako','ika','aji','saba','hirame','engawa','tobiko','masago','natto','dorayaki','dango','wagashi','anmitsu','kakigori','mochi ice cream','melon bread','onsen tamago','omurice','hayashi rice','napolitan','nikujaga','oden','yudofu','shabu shabu','nabe','chanko','zosui','ochazuke','chazuke','tamago kake gohan','tamagokake','katsudon','oyakodon','tendon','gyudon','unadon','kaisendon','chirashi','temaki','inari','futomaki','hosomaki','volcano roll','dragon roll','rainbow roll','spider roll','dynamite roll',
+      // Chinese expanded
+      'xiaolongbao','xiao long bao','char siu','congee','jook','porridge','mapo tofu','kung pao','sweet and sour','peking duck','wonton','char siu bao','siu mai','har gow','turnip cake','lo mai gai','cheung fun','tong sui','mango pudding','egg tart','wife cake','pineapple bun','red bean bun','century egg','red braised pork','lion head meatballs','twice cooked pork','general tso','chop suey','chow mein','lo mein','mei fun','scallion pancake','jianbing','you tiao','soy milk','malatang','mala','mala hot pot','dry pot','stinky tofu','tofu','doubanjiang','xo sauce','hoisin','oyster sauce','dan dan noodles','zhajiang mian','cold noodles','sesame noodles','pork belly','red pork','wonton soup','hot and sour soup','egg drop soup','lemon chicken','cashew chicken','beef broccoli','orange chicken','sesame chicken','mongolian beef','moo shu','bok choy','gai lan','chinese broccoli','water spinach','lotus root','taro cake','niangao','rice cake','tang yuan','glutinous rice ball','red bean soup','almond jelly','grass jelly','herbal jelly',
+      // Korean expanded
+      'samgyetang','dakgalbi','doenjang jjigae','kimchi jjigae','budae jjigae','army stew','haemul pajeon','seafood pancake','jeon','kimbap','triangle kimbap','ramyeon','shin ramyeon','rabokki','ddeokbokki','topokki','odeng','eomuk','fish cake skewer','street food','corn dog korean','hotteok pancake','buldak','fire noodle','honey butter chip','sikhye','makgeolli','banana milk','melona','binggrae','choco pie','pepero','yakult','soju cocktail','samgyopsal','pork belly bbq','galbi jjim','braised short rib','jokbal','bossam','mul naengmyeon','bibim naengmyeon','cold noodle','dongchimi','radish kimchi','kkakdugi','yeolmu kimchi','oi sobagi','stuffed cucumber','japchae glass noodle','tteokguk','rice cake soup','miyeok guk','seaweed soup','kongnamul','bean sprout','sigumchi namul','spinach namul','japchae',
+      // Southeast Asian expanded
+      'tom yum','tom kha','massaman curry','khao man gai','khao pad','mango sticky rice','pad see ew','pad kra pao','larb','nam tok','sai ua','moo ping','thai iced tea','cha yen','butterfly pea tea','roti canai','taro ball','pandan cake','durian','lychee','longan','dragonfruit','mangosteen','rambutan','pomelo','jackfruit','guava','papaya','mango salad','green papaya salad','vermicelli','bun bo hue','bun cha','bun rieu','cao lau','com tam','mi quang','banh cuon','banh xeo','banh canh','banh bot loc','che ba mau','sinh to','nuoc mia','sugarcane juice','nuoc cham','pho bo','pho ga','hu tieu','goi cuon','fresh roll','nem cuon','nasi goreng','mie goreng','gado gado','soto','rawon','opor ayam','pecel','lontong','ketupat','tempeh','krupuk','prawn cracker','beef rendang','chicken satay','peanut sauce','sambal','belacan','otak otak','fish cake','chendol','ais kacang','ice kacang','pulut hitam','kuih','ondeh ondeh','pineapple tart','love letter','kaya toast','half boiled egg','teh tarik','pulled tea','milo dinosaur','iced milo',
+      // Filipino expanded
+      'adobo','sinigang','kare kare','lechon','sisig','pinakbet','nilaga','tinola','bulalo','kinilaw','lumpia','pancit','arroz caldo','champorado','goto','kwek kwek','isaw','balut','turon','puto','bibingka','polvoron','pastillas','ube','buko pie','buko pandan','maja blanca','ginataan','kutsinta','sapin sapin','puto bumbong','halo halo','taho','leche flan','tocino','longganisa','daing','danggit','bangus','milkfish','kare kare','dinuguan','dinuguan pork','molo soup','pancit molo','lomi','sopas','sotanghon','palabok','canton noodle','spaghetti filipino','menudo filipino','afritada','mechado','caldereta','bistek','beef tapa','sinangag','garlic rice','calamansi juice','buko juice','young coconut',
+      // Indian expanded
+      'butter chicken','chicken tikka masala','palak paneer','shahi paneer','paneer','mapo','aloo gobi','baingan bharta','pav bhaji','vada pav','bhelpuri','sev puri','dahi puri','ragda','misal pav','dabeli','poha','upma','rava idli','medu vada','uttapam','pesarattu','appam','puttu','kadala curry','prawn curry','chole bhature','kulcha','aloo paratha','gobi paratha','matar kulcha','kachori','jalebi','gulab jamun','rasgulla','sandesh','mishti doi','kheer','halwa','barfi','ladoo','peda','kulfi','falooda','lassi','mango lassi','masala chai','cutting chai','biryani rice','pulao','khichdi','dal makhani','chana masala','rajma','malai kofta','seekh kebab','galouti kebab','tandoori chicken','tikka','rogan josh','dhansak','saag','saag aloo','aloo mutter','mixed veg','raita','pickle achaar','papad','ghee','naan bread','garlic naan','tawa paratha','plain paratha','stuffed paratha','rumali roti','tandoori roti','bhature','puri','poori','halwa puri',
+      // Middle Eastern expanded
+      'mansaf','maklouba','koshari','ful medames','shakshuka','muttabal','labneh','fattoush','tabbouleh','kibbeh','kafta','maqluba','kabsa','zurbian','muhallabia','kunafeh','knafeh','luqaimat','basbousa','ma amoul','qatayef','halva','tahini','manakish','zaatar bread','arayes','kofta','adana kebab','iskender kebab','doner kebab','lahmacun','flatbread','pide','gozleme','borek','baklava roll','Turkish delight','lokum','simit','pogaca','menemen','beyti kebab','cig kofte','mercimek','lentil soup','ezme','acili ezme','muhammara','cacik','ayran','turkish tea','çay','sahlab','salep','rosewater','orange blossom water',
+      // Italian expanded
+      'osso buco','vitello tonnato','carpaccio','burrata','stracciatella','ribollita','minestrone','pesto pasta','arrabiata','carbonara','amatriciana','cacio e pepe','aglio olio','saltimbocca','milanese','cotoletta','porchetta','arancini','calzone','focaccia','ciabatta','grissini','panzanella','caponata','peperonata','insalata caprese','caprese','prosciutto','mortadella','salami','bresaola','nduja','pecorino','parmigiano','gorgonzola','taleggio','mozzarella di bufala','cannoli','panna cotta','zabaione','granita siciliana','semifreddo','amaretti','biscotti','pandoro','panettone','struffoli','zeppole','sfogliatelle','bistecca','bistecca fiorentina','saltato','fritto misto','calamari','branzino','orecchiette','pappardelle','tagliatelle','fettuccine','linguine','spaghetti','rigatoni','penne','farfalle','gnocchi','lasagna','cannelloni','ravioli','tortellini',
+      // French expanded
+      'bouillabaisse','cassoulet','confit duck','rillettes','terrine','pate','quiche lorraine','gratin dauphinois','souffle','creme brulee','creme caramel','ile flottante','tarte tatin','mille feuille','opera cake','baba au rhum','canele','kouign amann','far breton','madeleines','financier','chouquettes','paris brest','saint honore','pain de campagne','pain au chocolat','chausson aux pommes','palmier','religieuse','vichyssoise','pot au feu','blanquette de veau','boeuf bourguignon','poulet basquaise','salad nicoise','ratatouille nicoise','croque monsieur','croque madame','onion soup','coq au vin','duck confit','foie gras','escargot','steak tartare','steak frites',
+      // Spanish/Latin expanded
+      'gazpacho','salmorejo','pan con tomate','escalivada','croquetas','tortilla espanola','patatas bravas','albondigas','cocido madrileno','fabada asturiana','fideus','arros negre','horchata','turron','churros con chocolate','crema catalana','pozole','menudo mexican','birria','birria tacos','barbacoa','cochinita pibil','chile en nogada','mole negro','chiles rellenos','flautas','tostadas','tamales','sopes','tlayuda','gordita','cemita','torta ahogada','agua fresca','tepache','atole','champurrado','conchas','pan dulce','tres leches','pastel de tres leches','arroz con leche','arroz con pollo','tostones','maduros','fried plantain','ceviche','lomo saltado','causa','aji de gallina','anticucho','picarones','chupe','seco de res','arroz con mariscos','chaufa','pollo a la brasa','empanada','chimichurri','asado','milanesa','faina','medialunas',
+      // American expanded
+      'philly cheesesteak','chicago deep dish','new york slice','lobster roll','clam chowder','new england clam chowder','gumbo','jambalaya','po boy','muffuletta','beignet','pecan pie','key lime pie','sweet potato pie','red velvet cake','hummingbird cake','carrot cake','funnel cake','corn dog','hush puppy','grits','biscuits and gravy','chicken and waffles','monte cristo','french dip sandwich','reuben sandwich','cuban sandwich','avocado toast','eggs benedict','huevos rancheros','chilaquiles','breakfast burrito','breakfast sandwich','cinnamon roll','sticky bun','apple fritter','bear claw','french toast','waffles and syrup','pancake stack','short stack','lox bagel','smoked salmon bagel','new york bagel','everything bagel','pastrami sandwich','corned beef','hot pastrami','turkey club','blt sandwich','philly roll','maryland crab cake','dungeness crab','lobster bisque','she crab soup','she crab','oyster po boy','shrimp po boy','barbeque brisket','pulled pork','smoked brisket','texas bbq','kansas city bbq','carolina pulled pork','memphis ribs',
+      // Desserts and drinks expanded
+      'creme brulee','panna cotta','bread pudding','rice pudding','tapioca pudding','chia pudding','mousse au chocolat','chocolate mousse','lava cake','fondant au chocolat','pavlova','meringue','baked alaska','bananas foster','crepes suzette','waffles liege','belgian waffle','stroopwafel','speculoos','biscoff','lotus biscoff','pain perdu','french toast brioche','churros','elephant ear','fried oreo','deep fried mars bar','funnel cake powder','cotton candy','candy floss','candied apple','toffee apple','caramel apple','caramel popcorn','kettle corn','popcorn','soft pretzel','pretzel bites','mini donuts','beignets','sopapilla','bunuelo','malasada','loukoumades','loukoum','turkish delight','halva sesame','tahini halva','pistacchio','pistachio baklava','kunafa','basbousa semolina','revani syrup cake','luqaimat honey','dango skewer','dorayaki pancake','imagawayaki','taiyaki fish','ningyo yaki','karinto','senbei','rice cracker','prawn cracker','shrimp chip'] },
+  groceries: { label:'Groceries',  icon:'🛒', color:'#84cc16',  keywords:['groceries','grocery','supermarket','walmart','costco','trader joes','whole foods','produce','vegetables','fruits','convenience store',
+    // Fruits
+    'apple','apples','banana','bananas','orange','oranges','mango','mangoes','grape','grapes','strawberry','strawberries','blueberry','blueberries','raspberry','raspberries','blackberry','blackberries','cranberry','cranberries','boysenberry','gooseberry','elderberry','mulberry','mulberries','currant','currants',
+    'watermelon','melon','honeydew','cantaloupe','rockmelon','pineapple','papaya','papayas','lychee','lychees','peach','peaches','pear','pears','plum','plums','cherry','cherries','kiwi','kiwis','avocado','avocados','coconut','coconuts','lemon','lemons','lime','limes','pomelo','guava','guavas','dragonfruit','pitaya','pitahaya','jackfruit','rambutan','longan','durian',
+    'fig','figs','date','dates','apricot','apricots','nectarine','nectarines','tangerine','tangerines','clementine','clementines','mandarin','mandarins','grapefruit','blood orange','kumquat','kumquats','yuzu','bergamot',
+    'pomegranate','pomegranates','passion fruit','passionfruit','starfruit','carambola','mangosteen','soursop','guyabano','tamarind','persimmon','persimmons','quince','jujube','feijoa','breadfruit','sapodilla','sapote','ackee','cherimoya','custard apple','sugar apple','plantain','plantains',
+    'salak','snake fruit','langsat','lanzones','calamansi','wax apple','java plum','sineguelas','macopa','balimbing','sampalok','bayabas','chico','atis','acai','amla','acerola','camu camu','cacao fruit','tamarillo',
+    // Vegetables
+    'cabbage','napa cabbage','chinese cabbage','savoy cabbage','red cabbage','wombok','broccoli','cauliflower','brussels sprouts','kale','collard greens','collards','mustard greens','chard','swiss chard','spinach','arugula','lettuce','romaine','watercress','endive','radicchio','tatsoi','mizuna','purslane','dandelion greens','beet greens','turnip greens',
+    'carrot','carrots','potato','potatoes','sweet potato','sweet potatoes','yam','yams','taro','cassava','parsnip','parsnips','turnip','turnips','beetroot','beet','beets','radish','daikon','jicama','kohlrabi','celery','celeriac',
+    'onion','onions','shallot','shallots','scallion','scallions','spring onion','spring onions','green onion','green onions','leek','leeks','garlic','ginger','galangal','lemongrass','turmeric','horseradish','wasabi',
+    'tomato','tomatoes','cucumber','cucumbers','zucchini','eggplant','pepper','peppers','bell pepper','okra','corn','peas','snow peas','snap peas','green beans','string beans','edamame','asparagus','artichoke','artichokes','fennel','rhubarb',
+    'mushroom','mushrooms','shiitake','oyster mushroom','portobello','enoki','pumpkin','pumpkins','butternut squash','acorn squash','kabocha','spaghetti squash','squash','bitter gourd','bitter melon','bottle gourd','luffa','chayote',
+    'bamboo shoots','lotus root','water chestnut','water chestnuts','bean sprout','beansprout','beansprouts','bok choy','kangkong','water spinach','moringa','malunggay','tatsoi','chive','chives','parsley','cilantro','coriander','basil','mint','dill','thyme','rosemary','oregano',
+    'lentil','lentils','chickpea','chickpeas','kidney beans','black beans','navy beans','pinto beans','lima beans',
+    // Pantry & dairy
+    'egg','eggs','milk','butter','cheese','yogurt','cream','flour','sugar','salt','oil','rice','bread','oats','cereal','sauce','vinegar','honey','jam','peanut butter','canned','frozen','chips','snack','snacks','crackers','biscuit','biscuits','chocolate','candy','ice cream'] },
+  transport: { label:'Transport',  icon:'🚗', color:'#3b82f6',  keywords:['uber','lyft','taxi','grab','train','metro','subway','gas station','fuel','petrol','parking','toll','transport','transit','commute','flight','plane','airline','bolt','mrt','jeepney','tricycle','tuk tuk','ferry','shuttle'] },
+  health:    { label:'Health',     icon:'💊', color:'#ec4899',  keywords:['doctor','pharmacy','medicine','drugstore','gym','fitness','hospital','clinic','dentist','therapy','therapist','vitamin','vitamins','supplement','supplements','protein','whey','casein','mass gainer','creatine','pre workout','preworkout','pre-workout','bcaa','amino','collagen','omega','fish oil','multivitamin','zinc','magnesium','calcium','iron supplement','probiotics','electrolyte','shaker','myprotein','gnc','optimum nutrition','isopure','dymatize','cellucor','ghost protein','gorilla mode','checkup','prescription','medical','dental','mental health','wellness','skincare','sunscreen','moisturizer','eye drops','bandage','first aid'] },
+  shopping:  { label:'Shopping',   icon:'🛍', color:'#a855f7',  keywords:['shopping','amazon','clothes','clothing','shoes','shirt','dress','pants','jeans','jacket','coat','bag','purse','wallet','mall','purchase','ebay','etsy','zara','h&m','uniqlo','nike','adidas','gadget','electronics','laptop','phone','smartphone','watch','jewelry','accessory','accessories'] },
+  bills:     { label:'Bills',      icon:'📄', color:'#6b7280',  keywords:['bill','bills','rent','mortgage','electricity','water bill','internet','phone bill','insurance','subscription','netflix','spotify','apple music','icloud','google one','amazon prime','hulu','disney plus','youtube premium'] },
+  household: { label:'Household',  icon:'🏠', color:'#f59e0b',  keywords:['cleaning','detergent','bleach','vacuum','furniture','ikea','home depot','toilet paper','paper towel','laundry','dishwasher','lightbulb','candle','curtain','pillow','bedsheet','towel','soap','shampoo','conditioner','body wash','toothpaste','toothbrush','razor','deodorant','household','plumber','electrician','repair','maintenance','hardware','paint','rug','mattress','air freshener','dish soap','fabric softener','trash bag','garbage bag','sponge','disinfectant','wipes','broom','dustpan','hanger','storage','organizer','lamp','heater','humidifier','air purifier','home supplies','cleaning supplies'] },
+  education: { label:'Education',  icon:'📚', color:'#06b6d4',  keywords:['tuition','university','college','school fee','school fees','course','textbook','tutorial','udemy','coursera','skillshare','masterclass','lesson','workshop','seminar','exam','certification','stationery','notebook','highlighter','calculator','student fee','enrollment','books','school supplies','online course','bootcamp','lecture','scholarship','training fee'] },
+  income:    { label:'Income',     icon:'💰', color:'#22c55e',  keywords:[] },
+  other:     { label:'Other',      icon:'📌', color:'#94a3b8',  keywords:[] },
+};
+
+const INCOME_WORDS = ['received','earned','got paid','salary','wage','paycheck','income','payment','refund','cashback','reimbursement','sold','freelance','bonus','deposit'];
+
+// ── Period helpers ────────────────────────────────────
+function periodBounds(period) {
+  const now = new Date();
+  let start;
+  if (period === 'today') {
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (period === 'this-week') {
+    const day = now.getDay(); // 0=Sun
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+  } else {
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return start.getTime();
+}
+
+function periodLabel(period) {
+  const now = new Date();
+  if (period === 'today') return now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  if (period === 'this-week') {
+    const day = now.getDay();
+    const sun = new Date(now); sun.setDate(now.getDate() - day);
+    const sat = new Date(sun); sat.setDate(sun.getDate() + 6);
+    const fmt = d => d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    return fmt(sun) + ' – ' + fmt(sat);
+  }
+  return now.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+}
+
+function filteredTx() {
+  const start = periodBounds(activePeriod);
+  return transactions.filter(tx => tx.ts >= start);
+}
+
+// ── Safe math evaluator ───────────────────────────────
+// Only allows digits, decimals, and + - * / — no variables or calls
+const MAX_AMOUNT = 10000000;
+
+function safeMath(expr) {
+  const clean = expr.replace(/\s/g, '');
+  if (!/^\d+(?:\.\d+)?(?:[+\-*\/]\d+(?:\.\d+)?)*$/.test(clean)) return null;
+  try {
+    const result = Function('"use strict"; return (' + clean + ')')();
+    return (isFinite(result) && result > 0 && result < MAX_AMOUNT) ? result : null;
+  } catch(e) { return null; }
+}
+
+// ── Parser ────────────────────────────────────────────
+function parse(text) {
+  const lower = text.toLowerCase();
+  const isIncome = INCOME_WORDS.some(w => lower.includes(w));
+
+  const amountRx = /\$\s?(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)\s?\$|(\d+(?:[.,]\d+)?)\s?(?:dollars?|usd|bucks?|nt\$?|twd)/i;
+  // Math expression: number followed by operator(s) and more numbers, e.g. 400/5 or 50+30-10
+  const mathRx   = /\b(\d+(?:\.\d+)?(?:\s*[+\-*\/]\s*\d+(?:\.\d+)?)+)\b/;
+  const fallbackRx = /\b(\d+(?:\.\d+)?)\b/g;
+
+  let amount = null;
+  let mathExpr = null;
+  let plainNumStr = null;
+
+  const amMatch = text.match(amountRx);
+  if (amMatch) {
+    amount = parseFloat((amMatch[1] || amMatch[2] || amMatch[3]).replace(',','.'));
+    if (amount >= MAX_AMOUNT) amount = null;
+  } else {
+    // Try math expression first (400/5, 50+30, 20*3, 100-15, 400/5+10 …)
+    const mMatch = text.match(mathRx);
+    if (mMatch) {
+      const result = safeMath(mMatch[1]);
+      if (result !== null) { amount = result; mathExpr = mMatch[1]; }
+    }
+    // Fall back to largest plain number
+    if (amount === null) {
+      let nums = [], m;
+      while ((m = fallbackRx.exec(text)) !== null) {
+        const n = parseFloat(m[1]);
+        if (n > 0 && n < MAX_AMOUNT) nums.push({ n, str: m[1] });
+      }
+      if (nums.length) {
+        const best = nums.reduce((a, b) => b.n > a.n ? b : a);
+        amount = best.n;
+        plainNumStr = best.str;
+      }
+    }
+  }
+
+  if (!amount) return null;
+
+  let cat = 'other';
+  for (const [key, data] of Object.entries(CATEGORIES)) {
+    if (key === 'income' || key === 'other') continue;
+    if (data.keywords.some(k => {
+      const esc = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp('(?<![\\w])' + esc + '(?![\\w])', 'i').test(lower);
+    })) { cat = key; break; }
+  }
+  if (isIncome) cat = 'income';
+
+  let desc = text
+    .replace(amountRx, '')
+    .replace(mathExpr ? new RegExp(mathExpr.replace(/[+\-*.\/]/g, c => '\\' + c)) : /(?:)/, '')
+    .replace(plainNumStr ? new RegExp('\\b' + plainNumStr.replace(/\./g, '\\.') + '\\b') : /(?:)/, '')
+    .replace(/\b(spent|bought|paid|purchased|got|received|earned|for|on|a|an|the|some)\b/gi, ' ')
+    .replace(/\s+/g, ' ').trim();
+
+  if (!desc || desc.length < 2) desc = cat === 'income' ? 'Income' : 'Expense';
+  desc = desc.charAt(0).toUpperCase() + desc.slice(1);
+
+  return { amount, cat, desc, isIncome };
+}
+
+// ── Format ────────────────────────────────────────────
+function fmt(n) {
+  return currency.symbol + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function getCatIcon(cat)  { return CATEGORIES[cat]?.icon  || '📌'; }
+function getCatLabel(cat) { return CATEGORIES[cat]?.label || 'Other'; }
+function getCatColor(cat) { return CATEGORIES[cat]?.color || '#94a3b8'; }
+
+// ── Update header ─────────────────────────────────────
+function updateHeader() {
+  const txs = filteredTx();
+  const spent = txs.filter(t => !t.isIncome).reduce((a,t) => a + t.amount, 0);
+  document.getElementById('spent-amount').textContent = fmt(spent);
+  document.getElementById('spent-period').textContent = periodLabel(activePeriod);
+}
+
+function stepPeriod(dir) {
+  activePeriodIdx = (activePeriodIdx + dir + PERIODS.length) % PERIODS.length;
+  activePeriod = PERIODS[activePeriodIdx];
+  document.getElementById('period-label').textContent = PERIOD_NAMES[activePeriod];
+  updateHeader();
+  renderLog();
+}
+
+function save() {
+  try {
+    localStorage.setItem('ledger_tx', JSON.stringify(transactions));
+    return true;
+  } catch (e) {
+    showToast("Couldn't save — storage full");
+    return false;
+  }
+}
+
+// ── Log render ────────────────────────────────────────
+function buildTxRow(tx) {
+  const row = document.createElement('div');
+  row.className = 'log-row';
+  const time = new Date(tx.ts).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+  row.innerHTML = `
+    <div class="log-icon ${tx.isIncome ? 'income' : ''}">${getCatIcon(tx.cat)}</div>
+    <div class="log-body">
+      <div class="log-desc">${escHtml(tx.desc)}</div>
+      <div class="log-meta">
+        <span class="log-cat">${getCatLabel(tx.cat)}</span>
+        <span class="log-time">${time}</span>
+      </div>
+    </div>
+    <div class="log-right">
+      <span class="log-amount ${tx.isIncome ? 'income' : ''}">${tx.isIncome ? '+' : ''}${fmt(tx.amount)}</span>
+      <button class="log-del" onclick="deleteTx('${tx.id}')" title="Remove">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `;
+  return row;
+}
+
+function toggleDayGroup(el) {
+  el.classList.toggle('open');
+}
+
+function renderLog() {
+  const log = document.getElementById('log');
+  const txs = filteredTx().sort((a,b) => b.ts - a.ts);
+
+  if (txs.length === 0) {
+    const labels = { today:'today', 'this-week':'this week', 'this-month':'this month' };
+    log.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">Nothing ${labels[activePeriod]}</div>
+        <div class="empty-sub">Type below to log a spend or income</div>
+      </div>`;
+    return;
+  }
+
+  const groups = {};
+  txs.forEach(tx => {
+    const key = new Date(tx.ts).toDateString();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(tx);
+  });
+
+  log.innerHTML = '';
+
+  const today     = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 864e5).toDateString();
+
+  if (activePeriod === 'today') {
+    // Today: flat list, no grouping
+    txs.forEach(tx => log.appendChild(buildTxRow(tx)));
+    return;
+  }
+
+  // Weekly / Monthly: collapsible day groups
+  Object.entries(groups).forEach(([dateStr, list]) => {
+    const d = new Date(dateStr);
+    const dateLabel = dateStr === today ? 'Today'
+                    : dateStr === yesterday ? 'Yesterday'
+                    : d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+
+    const dayTotal = list.filter(t => !t.isIncome).reduce((a,t) => a + t.amount, 0);
+    const count = list.length;
+
+    const group = document.createElement('div');
+    group.className = 'day-group';
+
+    const toggle = document.createElement('div');
+    toggle.className = 'day-group-toggle';
+    toggle.innerHTML = `
+      <div class="day-toggle-left">
+        <div class="day-toggle-date">${dateLabel}</div>
+        <div class="day-toggle-count">${count} transaction${count !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="day-toggle-right">
+        <span class="day-toggle-total">${fmt(dayTotal)}</span>
+        <div class="day-toggle-see-more">
+          <span>see more</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </div>
+    `;
+    toggle.onclick = () => toggleDayGroup(group);
+
+    const rows = document.createElement('div');
+    rows.className = 'day-group-rows';
+    list.forEach(tx => rows.appendChild(buildTxRow(tx)));
+
+    group.appendChild(toggle);
+    group.appendChild(rows);
+    log.appendChild(group);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Warning helpers ───────────────────────────────────
+function showWarning(title, sub) {
+  const w   = document.getElementById('input-warning');
+  const txt = document.getElementById('input-warning-text');
+  const sub_ = document.getElementById('input-warning-sub');
+  txt.textContent  = title;
+  sub_.textContent = sub || '';
+  w.classList.add('show');
+  clearTimeout(w._t);
+  w._t = setTimeout(() => w.classList.remove('show'), 4000);
+}
+
+function hideWarning() {
+  const w = document.getElementById('input-warning');
+  clearTimeout(w._t);
+  w.classList.remove('show');
+}
+
+function diagnoseInput(text) {
+  const hasDigit = /\d/.test(text);
+  // Leading zero on a whole number, e.g. 045 (not 0.45 or a phone)
+  const leadingZero = /\b0\d+/.test(text) && !/\b0\.\d+/.test(text);
+  // Invalid symbol directly before or after a number
+  const badSymbol = /[&@#^~`|\\]\s*\d/.test(text) || /\d\s*[&@#^~`|\\]/.test(text);
+
+  const bigNumber = (text.match(/\d+(?:\.\d+)?/g) || []).some(n => parseFloat(n) >= MAX_AMOUNT);
+
+  if (!hasDigit) {
+    return { title: 'No amount found', sub: 'Try something like "lunch 45" or "coffee 12.50"' };
+  }
+  if (bigNumber) {
+    return { title: 'Amount too large', sub: `Max amount is ${fmt(MAX_AMOUNT - 0.01)}` };
+  }
+  if (leadingZero) {
+    const fixed = text.replace(/\b0+(\d)/g, '$1');
+    return { title: 'Leading zero — amount looks off', sub: `Did you mean: "${fixed}"?` };
+  }
+  if (badSymbol) {
+    return { title: 'Invalid character before amount', sub: 'Use $ or just a plain number — e.g. "dinner $30" or "dinner 30"' };
+  }
+  return { title: 'Amount not recognized', sub: 'Try "lunch 45", "pizza 120/3", or "coffee 12+5"' };
+}
+
+// ── Handle send ───────────────────────────────────────
+function handleSend() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const parts = text.split(/[,;\n]+/).map(s => s.trim()).filter(s => s.length > 0);
+
+  if (parts.length > 1) {
+    const ok = [], bad = [];
+    parts.forEach(part => {
+      const p = parse(part);
+      if (p) ok.push(p); else bad.push(part);
+    });
+
+    if (ok.length > 0) {
+      input.value = '';
+      input.style.height = 'auto';
+      document.getElementById('send-btn').disabled = true;
+      hideWarning();
+      const now = Date.now();
+      ok.forEach((p, i) => {
+        transactions.unshift({ id: (now + i) + '-tx', amount: p.amount, cat: p.cat, desc: p.desc, isIncome: p.isIncome, ts: now + i });
+      });
+      save();
+      updateHeader();
+      renderLog();
+      if (bad.length > 0) {
+        showWarning(bad.length + ' item' + (bad.length > 1 ? 's' : '') + ' not recognized', bad.join(', '));
+      } else {
+        showToast(ok.length + ' item' + (ok.length > 1 ? 's' : '') + ' logged');
+      }
+      return;
+    }
+  }
+
+  const parsed = parse(text);
+  if (parsed) {
+    input.value = '';
+    input.style.height = 'auto';
+    document.getElementById('send-btn').disabled = true;
+    hideWarning();
+    transactions.unshift({
+      id: Date.now() + '-tx',
+      amount: parsed.amount,
+      cat: parsed.cat,
+      desc: parsed.desc,
+      isIncome: parsed.isIncome,
+      ts: Date.now(),
+    });
+    save();
+    updateHeader();
+    renderLog();
+    showToast(parsed.isIncome ? '+' + fmt(parsed.amount) + ' saved' : fmt(parsed.amount) + ' logged');
+  } else {
+    const { title, sub } = diagnoseInput(text);
+    showWarning(title, sub);
+    const row = document.querySelector('.input-row');
+    row.style.animation = 'none';
+    row.offsetHeight;
+    row.style.animation = 'shake 0.35s cubic-bezier(0.36,0.07,0.19,0.97)';
+  }
+}
+
+function deleteTx(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  save();
+  updateHeader();
+  renderLog();
+}
+
+// ── External entry point for the Android home-screen widget ──────
+// Called via WebView.evaluateJavascript() with the raw text captured
+// in the widget's quick-add popup. Reuses the same parser/storage
+// path as the in-app input box so behavior stays identical.
+window.addFromWidget = function(text) {
+  const parsed = parse(String(text || ''));
+  if (!parsed) return false;
+  transactions.unshift({
+    id: Date.now() + '-tx',
+    amount: parsed.amount,
+    cat: parsed.cat,
+    desc: parsed.desc,
+    isIncome: parsed.isIncome,
+    ts: Date.now(),
+  });
+  save();
+  updateHeader();
+  renderLog();
+  return true;
+};
+
+// ── Breakdown render (used inside analytics sheet) ────
+function renderBreakdown() {
+  const txs = filteredTx();
+  const cats = {};
+  let totalExpense = 0;
+  txs.forEach(tx => {
+    if (!tx.isIncome) { cats[tx.cat] = (cats[tx.cat] || 0) + tx.amount; totalExpense += tx.amount; }
+  });
+
+  const body = document.getElementById('sheet-body');
+  body.innerHTML = '';
+  const income = txs.filter(t => t.isIncome).reduce((a,t) => a + t.amount, 0);
+
+  if (!income && !totalExpense) {
+    body.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--text-dim);font-size:13px;">No transactions</div>`;
+    return;
+  }
+  if (income > 0) {
+    const count = txs.filter(t => t.isIncome).length;
+    body.appendChild(catRow('income', 'Income', count, 100, income, true));
+  }
+  Object.entries(cats).sort((a,b) => b[1]-a[1]).forEach(([cat, amount]) => {
+    const pct = totalExpense > 0 ? Math.round(amount / totalExpense * 100) : 0;
+    const count = txs.filter(t => t.cat === cat && !t.isIncome).length;
+    body.appendChild(catRow(cat, getCatLabel(cat), count, pct, amount, false));
+  });
+  const net = income - totalExpense;
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:14px 0 4px;display:flex;justify-content:space-between;align-items:center;';
+  div.innerHTML = `
+    <span style="font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;">Net</span>
+    <span style="font-family:var(--mono);font-size:17px;font-weight:600;color:${net>=0?'var(--accent)':'#f43f5e'};">${net<0?'-':'+'}${fmt(net)}</span>
+  `;
+  body.appendChild(div);
+}
+
+// ── Settings screen ───────────────────────────────────
+function openSettingsSheet() {
+  document.getElementById('settings-screen').classList.add('open');
+}
+
+// ── Notifications screen ──────────────────────────────
+const REMINDER_OPTIONS = [
+  { key: 'off',  label: 'Off',           sub: 'No reminders' },
+  { key: 'once', label: 'Once a day',    sub: '8:00 PM', recommended: true },
+  { key: '3x',   label: '3 times a day', sub: 'Morning, dinner & before bed' },
+];
+let reminderFrequency = 'off';
+
+function refreshReminderFrequency() {
+  const bridge = window.NativeBridge;
+  reminderFrequency = bridge ? bridge.getFrequency() : (localStorage.getItem('ledger_reminder_freq') || 'off');
+  updateNotificationsRowSub();
+}
+
+function updateNotificationsRowSub() {
+  const opt = REMINDER_OPTIONS.find(o => o.key === reminderFrequency) || REMINDER_OPTIONS[0];
+  const el = document.getElementById('notifications-row-sub');
+  if (el) el.textContent = opt.label;
+}
+
+function openNotificationsSheet() {
+  renderReminderOptions();
+  document.getElementById('notifications-screen').classList.add('open');
+}
+
+function renderReminderOptions() {
+  const wrap = document.getElementById('reminder-options');
+  wrap.innerHTML = '';
+  REMINDER_OPTIONS.forEach(opt => {
+    const el = document.createElement('div');
+    el.className = 'option-row';
+    el.innerHTML = `
+      <div class="option-row-body">
+        <div class="option-row-title">
+          <span class="option-row-label">${opt.label}</span>
+          ${opt.recommended ? '<span class="option-badge">Recommended</span>' : ''}
+        </div>
+        <div class="option-row-sub">${opt.sub}</div>
+      </div>
+      <div class="option-radio${opt.key === reminderFrequency ? ' active' : ''}">${opt.key === reminderFrequency ? '<div class="option-radio-dot"></div>' : ''}</div>
+    `;
+    el.onclick = () => selectReminderFrequency(opt.key);
+    wrap.appendChild(el);
+  });
+}
+
+function selectReminderFrequency(key) {
+  if (key === reminderFrequency) return;
+  const bridge = window.NativeBridge;
+  if (!bridge) {
+    // Not running inside the Android shell (e.g. a plain browser preview) — just persist locally.
+    reminderFrequency = key;
+    localStorage.setItem('ledger_reminder_freq', key);
+    updateNotificationsRowSub();
+    renderReminderOptions();
+    showToast(key === 'off' ? 'Reminders off' : 'Reminders updated');
+    return;
+  }
+  bridge.requestFrequency(key);
+}
+
+// Called by MainActivity once a permission prompt (if any) is resolved.
+window.onReminderFrequencyResult = function(granted, frequency) {
+  reminderFrequency = frequency;
+  localStorage.setItem('ledger_reminder_freq', frequency);
+  updateNotificationsRowSub();
+  renderReminderOptions();
+  showToast(!granted ? 'Enable notifications for Ledger in system settings' : (frequency === 'off' ? 'Reminders off' : 'Reminders updated'));
+};
+
+function catRow(cat, label, count, pct, amount, isIncome) {
+  const el = document.createElement('div');
+  el.className = 'cat-row';
+  el.innerHTML = `
+    <div class="cat-left">
+      <div class="cat-dot" style="background:${getCatColor(cat)}"></div>
+      <div>
+        <div class="cat-name">${label}</div>
+        <div class="cat-count">${count} item${count!==1?'s':''}${!isIncome?' · '+pct+'%':''}</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${getCatColor(cat)}"></div></div>
+      <div class="cat-amount" style="color:${isIncome?'var(--accent)':'var(--text)'}">${isIncome?'+':''}${fmt(amount)}</div>
+    </div>
+  `;
+  return el;
+}
+
+// ── Currency sheet ────────────────────────────────────
+function openCurrencySheet() {
+  const grid = document.getElementById('currency-grid');
+  grid.innerHTML = '';
+  CURRENCIES.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'currency-item' + (c.code === currency.code ? ' active' : '');
+    el.innerHTML = `
+      <span class="currency-flag">${c.flag}</span>
+      <div class="currency-info">
+        <div class="currency-code">${c.code}</div>
+        <div class="currency-name">${c.name}</div>
+      </div>
+      <span class="currency-sym">${c.symbol}</span>
+    `;
+    el.onclick = () => selectCurrency(c);
+    grid.appendChild(el);
+  });
+  openSheet('currency-sheet');
+}
+
+function selectCurrency(c) {
+  currency = c;
+  localStorage.setItem('ledger_currency', JSON.stringify(c));
+  document.getElementById('currency-btn').textContent = c.code;
+  updateHeader();
+  renderLog();
+  closeAllSheets();
+  showToast(c.code + ' ' + c.symbol);
+}
+
+// ── Sheet helpers ─────────────────────────────────────
+function openSheet(id) {
+  closeAllSheets();
+  document.getElementById(id).classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeAllSheets() {
+  document.getElementById('currency-sheet').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function confirmClear() {
+  if (!transactions.length) { showToast('Nothing to clear'); return; }
+  if (confirm(`Delete all ${transactions.length} transaction${transactions.length!==1?'s':''}?`)) {
+    transactions = [];
+    save();
+    updateHeader();
+    renderLog();
+    closeAllSheets();
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ── Input ─────────────────────────────────────────────
+const msgInput = document.getElementById('msg-input');
+const sendBtn  = document.getElementById('send-btn');
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+msgInput.addEventListener('input', function() {
+  autoResize(this);
+  sendBtn.disabled = !this.value.trim();
+  if (this.value.trim()) hideWarning();
+});
+
+msgInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!sendBtn.disabled) handleSend();
+  }
+});
+
+// ── Analytics sheet ───────────────────────────────────
+function openAnalyticsSheet() {
+  document.getElementById('analytics-period-label').textContent = periodLabel(activePeriod);
+  renderBreakdown();
+  renderPieChart();
+  renderBarChart();
+  document.getElementById('analytics-screen').classList.add('open');
+}
+
+function closeFullscreen(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function renderPieChart() {
+  const txs = filteredTx().filter(t => !t.isIncome);
+  const cats = {};
+  let total = 0;
+  txs.forEach(tx => { cats[tx.cat] = (cats[tx.cat] || 0) + tx.amount; total += tx.amount; });
+
+  const svg = document.getElementById('pie-svg');
+  const legend = document.getElementById('pie-legend');
+  const centerTotal = document.getElementById('pie-center-total');
+  svg.innerHTML = '';
+  legend.innerHTML = '';
+  centerTotal.textContent = fmt(total);
+
+  if (total === 0) {
+    svg.innerHTML = `<circle cx="90" cy="90" r="70" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="20"/>`;
+    legend.innerHTML = `<div class="no-data-msg">No expense data</div>`;
+    return;
+  }
+
+  const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const cx = 90, cy = 90, r = 70, innerR = 50;
+  const gap = 0.018; // radians gap between slices
+  let angle = -Math.PI / 2;
+
+  sorted.forEach(([cat, amount]) => {
+    const pct = amount / total;
+    const sweep = pct * Math.PI * 2 - gap;
+    if (sweep <= 0) return;
+
+    const x1 = cx + r * Math.cos(angle + gap / 2);
+    const y1 = cy + r * Math.sin(angle + gap / 2);
+    const x2 = cx + r * Math.cos(angle + gap / 2 + sweep);
+    const y2 = cy + r * Math.sin(angle + gap / 2 + sweep);
+    const ix1 = cx + innerR * Math.cos(angle + gap / 2 + sweep);
+    const iy1 = cy + innerR * Math.sin(angle + gap / 2 + sweep);
+    const ix2 = cx + innerR * Math.cos(angle + gap / 2);
+    const iy2 = cy + innerR * Math.sin(angle + gap / 2);
+    const large = sweep > Math.PI ? 1 : 0;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${ix1},${iy1} A${innerR},${innerR} 0 ${large},0 ${ix2},${iy2} Z`);
+    path.setAttribute('fill', getCatColor(cat));
+    path.setAttribute('opacity', '0.92');
+    svg.appendChild(path);
+    angle += pct * Math.PI * 2;
+
+    // Legend row
+    const item = document.createElement('div');
+    item.className = 'pie-legend-item';
+    item.innerHTML = `
+      <div class="pie-legend-dot" style="background:${getCatColor(cat)}"></div>
+      <span class="pie-legend-name">${getCatLabel(cat)}</span>
+      <span class="pie-legend-pct">${Math.round(pct * 100)}%</span>
+      <span class="pie-legend-amt">${fmt(amount)}</span>
+    `;
+    legend.appendChild(item);
+  });
+}
+
+function renderBarChart() {
+  const wrap = document.getElementById('bar-chart-wrap');
+  wrap.innerHTML = '';
+
+  // Build last 6 months buckets
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      label: d.toLocaleDateString('en-US', { month: 'short' }),
+      year: d.getFullYear(),
+      month: d.getMonth(),
+      total: 0,
+    });
+  }
+
+  transactions.filter(t => !t.isIncome).forEach(tx => {
+    const d = new Date(tx.ts);
+    const m = months.find(b => b.year === d.getFullYear() && b.month === d.getMonth());
+    if (m) m.total += tx.amount;
+  });
+
+  const maxVal = Math.max(...months.map(m => m.total), 1);
+  const hasAny = months.some(m => m.total > 0);
+
+  if (!hasAny) {
+    wrap.innerHTML = `<div class="no-data-msg">No expense history</div>`;
+    return;
+  }
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const W = 310, H = 130, barW = 32, gap = (W - barW * 6) / 7;
+  const topPad = 20, bottomPad = 28;
+  const chartH = H - topPad - bottomPad;
+
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('class', 'bar-chart-svg');
+
+  months.forEach((m, i) => {
+    const x = gap + i * (barW + gap);
+    const barH = m.total > 0 ? Math.max(4, (m.total / maxVal) * chartH) : 3;
+    const y = topPad + chartH - barH;
+    const isCurrentMonth = m.year === now.getFullYear() && m.month === now.getMonth();
+
+    // Bar background track
+    const track = document.createElementNS(svgNS, 'rect');
+    track.setAttribute('x', x);
+    track.setAttribute('y', topPad);
+    track.setAttribute('width', barW);
+    track.setAttribute('height', chartH);
+    track.setAttribute('rx', '6');
+    track.setAttribute('fill', 'rgba(255,255,255,0.04)');
+    svg.appendChild(track);
+
+    // Bar fill
+    const bar = document.createElementNS(svgNS, 'rect');
+    bar.setAttribute('x', x);
+    bar.setAttribute('y', y);
+    bar.setAttribute('width', barW);
+    bar.setAttribute('height', barH);
+    bar.setAttribute('rx', '6');
+    bar.setAttribute('fill', isCurrentMonth ? '#22c55e' : 'rgba(255,255,255,0.18)');
+    svg.appendChild(bar);
+
+    // Amount label on top of bar (only if >0)
+    if (m.total > 0) {
+      const amtLabel = document.createElementNS(svgNS, 'text');
+      amtLabel.setAttribute('x', x + barW / 2);
+      amtLabel.setAttribute('y', y - 4);
+      amtLabel.setAttribute('class', 'bar-amount-label');
+      amtLabel.setAttribute('fill', isCurrentMonth ? '#22c55e' : 'rgba(255,255,255,0.4)');
+      const display = m.total >= 1000 ? (m.total / 1000).toFixed(1) + 'k' : Math.round(m.total).toString();
+      amtLabel.textContent = currency.symbol + display;
+      svg.appendChild(amtLabel);
+    }
+
+    // Month label
+    const lbl = document.createElementNS(svgNS, 'text');
+    lbl.setAttribute('x', x + barW / 2);
+    lbl.setAttribute('y', H - 6);
+    lbl.setAttribute('class', 'bar-month-label');
+    if (isCurrentMonth) lbl.setAttribute('fill', '#22c55e');
+    lbl.textContent = m.label;
+    svg.appendChild(lbl);
+  });
+
+  wrap.appendChild(svg);
+}
+
+// ── Init ──────────────────────────────────────────────
+document.getElementById('currency-btn').textContent = currency.code;
+updateHeader();
+renderLog();
+refreshReminderFrequency();
+
+// Refresh date-dependent UI (e.g. "Today" label/totals) when the tab
+// regains focus, in case it was left idle across a day boundary.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    updateHeader();
+    renderLog();
+  }
+});
+
+// Keep tabs in sync: another tab's edits (add/delete/clear/currency) would
+// otherwise be silently overwritten the next time this tab calls save().
+window.addEventListener('storage', (e) => {
+  if (e.key === 'ledger_tx') {
+    transactions = readJSON('ledger_tx', []);
+    updateHeader();
+    renderLog();
+  } else if (e.key === 'ledger_currency') {
+    currency = readJSON('ledger_currency', null) || currency;
+    document.getElementById('currency-btn').textContent = currency.code;
+    updateHeader();
+    renderLog();
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+</body>
+</html>

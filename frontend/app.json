@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Ledger",
+    "slug": "ledger-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0d0f"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.m1dtf.ledger",
+      "config": { "usesNonExemptEncryption": false }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d0d0f"
+      },
+      "package": "com.m1dtf.ledger"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-notifications"
+    ]
+  }
+}

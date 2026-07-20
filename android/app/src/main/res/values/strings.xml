@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ledger</string>
+    <string name="quick_add_title">Add expense</string>
+    <string name="widget_label">Ledger Quick Add</string>
+    <string name="widget_hint">+ Add expense</string>
+</resources>

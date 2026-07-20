@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:orientation="horizontal"
+    android:gravity="bottom"
+    android:background="@drawable/quickadd_input_bg"
+    android:padding="10dp"
+    android:layout_margin="16dp">
+
+    <EditText
+        android:id="@+id/quick_add_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="@null"
+        android:hint="spent 20 on food…"
+        android:textColorHint="#3A3A42"
+        android:textColor="#F0F0F0"
+        android:textSize="16sp"
+        android:maxLines="4"
+        android:inputType="textCapSentences|textMultiLine"
+        android:imeOptions="actionSend"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp" />
+
+    <ImageButton
+        android:id="@+id/quick_add_send"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="@drawable/send_btn_bg"
+        android:src="@drawable/ic_send"
+        android:contentDescription="@string/quick_add_title"
+        android:scaleType="center" />
+
+</LinearLayout>

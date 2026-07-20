@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Secrets — never commit these
+.env
+.env.local
+*service-account*.json
+firebase-service-account.json
+
+# Android build output (large, regenerable) — matches at any depth
+android/build/
+android/app/build/
+android/.gradle/
+android/.cxx/
+android/local.properties
+*.apk
+*.aab
+
+# Expo / RN
+.expo/
+*.jsbundle
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
