@@ -64,6 +64,18 @@ npm start
 
 Scan the QR code with the **Expo Go** app to run it on your phone.
 
+### Running the native Android project directly
+
+`frontend/android/` is a full, pre-generated native Android project (not just Expo config) — it includes the home-screen widget and quick-add native code, so it can't be run through Expo Go alone. To build and run it:
+
+```bash
+cd frontend
+npm install
+npx expo run:android   # builds and installs on a connected device/emulator
+```
+
+Or open `frontend/android/` directly in **Android Studio** and hit Run. Either way you'll need the Android SDK installed (via Android Studio's SDK Manager) and `frontend/android/local.properties` pointing at it (`sdk.dir=/path/to/Android/Sdk`) — that file is gitignored since the path is machine-specific.
+
 ## Security notes
 
 - All API routes (except `/health`) require a valid Firebase ID token; the backend scopes every database query to the authenticated user, so one account can never read or modify another's data.
