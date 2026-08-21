@@ -1,6 +1,6 @@
 # Ledger
 
-A personal finance tracker built with Expo (React Native) and a Node.js/Express + PostgreSQL backend. Log expenses with plain-English input like `"lunch 45"`, split shared bills with friends, and track spending trends — all synced across devices with Firebase authentication.
+A personal finance tracker built with Expo (React Native) and a Node.js/Express + PostgreSQL backend. Log expenses with plain-English input like `"lunch 45"`, split shared bills with friends, and track spending trends all synced across devices with Firebase authentication.
 
 ## Features
 
@@ -8,8 +8,8 @@ A personal finance tracker built with Expo (React Native) and a Node.js/Express 
 - **Transaction history** with offline caching, so the app still works without a connection
 - **Analytics** — spending trends and breakdowns over time
 - **Calendar view** of transactions by day
-- **Bill splitting** — Splitwise-style shared expenses across people and groups, with running balances
-- **Android home-screen widget** — a quick-add popup for logging an expense without opening the app
+- **Bill splitting** — Splitwise style shared expenses across people and groups, with running balances
+- **Android home-screen widget** — a quick add popup for logging an expense without opening the app
 - **Push notifications** for reminders
 - **Firebase email/password authentication**, with per-user data isolation on the backend
 
@@ -62,7 +62,6 @@ npm install
 npm start
 ```
 
-Scan the QR code with the **Expo Go** app to run it on your phone.
 
 ### Running the native Android project directly
 
