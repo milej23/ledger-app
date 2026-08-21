@@ -14,9 +14,21 @@ const PORT = process.env.PORT || 3001;
 // ── Security headers
 app.use(helmet());
 
-// ── Allow requests from your React Native app / Expo dev server
+// ── CORS
+// Native apps (iOS/Android) don't send an Origin header, so this only
+// matters for browser-based clients (e.g. the web/PWA build). Set
+// ALLOWED_ORIGINS in .env to a comma-separated list of exact origins
+// (e.g. https://yourapp.com) that are allowed to call this API from a browser.
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: '*',  // Tighten this to your production domain later
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
 }));
 
 // ── Parse JSON bodies
