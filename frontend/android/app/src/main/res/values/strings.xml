@@ -1,5 +1,8 @@
 <resources>
   <string name="app_name">Ledger</string>
+  <string name="quick_add_title">Add expense</string>
+  <string name="widget_label">Ledger Quick Add</string>
+  <string name="widget_hint">+ Add expense</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
 </resources>

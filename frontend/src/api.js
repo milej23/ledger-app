@@ -5,9 +5,7 @@
 import axios from 'axios';
 import { auth } from './firebase';
 
-// During development, use your machine's LAN IP so the phone
-// can reach it:  e.g. 'http://192.168.1.10:3001'
-const BASE_URL = 'http://192.168.0.127:3001';
+const BASE_URL = 'https://ledger-o5w5.onrender.com';
 
 const api = axios.create({ baseURL: BASE_URL });
 

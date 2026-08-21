@@ -1,9 +1,10 @@
 import { useSyncExternalStore } from 'react';
-import { AppState } from 'react-native';
+import { AppState, NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getTransactions, createTransaction, deleteTransaction, clearTransactions } from '../api';
 import { auth } from '../firebase';
+import { parse } from '../utils/parser';
 
 const STORAGE_KEY = 'ledger_tx_cache';
 
@@ -61,16 +62,39 @@ async function load() {
   }
 }
 
+// Entries typed into the home-screen widget while the app was closed are
+// queued natively (see PendingStore.kt); pull them in, parse, and save.
+// Runs after load() so the server refresh can't overwrite the new entries.
+async function drainWidgetQueue() {
+  if (Platform.OS !== 'android' || !NativeModules.WidgetQueue) return;
+  try {
+    const items = await NativeModules.WidgetQueue.drain();
+    for (const text of items || []) {
+      const parsed = parse(text);
+      if (parsed && !parsed.tooLarge) {
+        await addTransaction({
+          amount: parsed.amount,
+          cat: parsed.cat,
+          desc: parsed.desc,
+          isIncome: parsed.isIncome,
+        });
+      }
+    }
+  } catch {}
+}
+
 function ensureWatchers() {
   if (watching) return;
   watching = true;
   // Fires once Firebase resolves the persisted session (the initial load —
   // auth.currentUser is often still null at mount time) and again on every
   // sign-in / sign-out.
-  onAuthStateChanged(auth, load);
+  onAuthStateChanged(auth, async () => { await load(); drainWidgetQueue(); });
   // Refresh when the app returns to the foreground, so data doesn't go
   // stale after being backgrounded.
-  AppState.addEventListener('change', (s) => { if (s === 'active') load(); });
+  AppState.addEventListener('change', async (s) => {
+    if (s === 'active') { await load(); drainWidgetQueue(); }
+  });
 }
 
 async function addTransaction(tx) {
